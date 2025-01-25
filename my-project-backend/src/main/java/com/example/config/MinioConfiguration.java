@@ -20,9 +20,6 @@ public class MinioConfiguration {
     @Bean
     public MinioClient minioClient(){
         log.info("init minio client...");
-        System.out.println(endpoint);
-        System.out.println(username);
-        System.out.println(password);
         return MinioClient.builder()
                 .endpoint(endpoint)
                 .credentials(username, password)

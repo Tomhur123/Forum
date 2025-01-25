@@ -2,7 +2,7 @@
 defineProps({
   icon: Object,
   title: String,
-  desc: String
+  desc: String,
 })
 </script>
 
