@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.entity.dto.*;
 import com.example.entity.vo.request.TopicCreateVO;
+import com.example.entity.vo.request.TopicUpdateVO;
 import com.example.entity.vo.response.TopicDetailVO;
 import com.example.entity.vo.response.TopicPreviewVO;
 import com.example.entity.vo.response.TopicTopVO;
@@ -159,6 +160,22 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
                     BeanUtils.copyProperties(topic, vo);
                     return vo;
                 }).toList();
+    }
+
+    @Override
+    public String updateTopic(int uid, TopicUpdateVO vo) {
+        if(!textLimitCheck(vo.getContent()))
+            return "文章内容太多，发文失败！";
+        if(!types.contains(vo.getType()))
+            return "文章类型非法！";
+        baseMapper.update(null, Wrappers.<Topic>update()
+                .eq("uid", uid)
+                .eq("id", vo.getId())
+                .set("title", vo.getTitle())
+                .set("content", vo.getContent().toString())
+                .set("type", vo.getType())
+        );
+        return null;
     }
 
     private final Map<String, Boolean> state = new HashMap<>();
