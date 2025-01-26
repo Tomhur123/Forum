@@ -11,7 +11,7 @@ import {
   EditPen,
   Link,
   Picture,
-  Microphone
+  Microphone, CircleCheck, Star, FolderOpened, ArrowRightBold
 } from "@element-plus/icons-vue";
 import Weather from "@/components/Weather.vue";
 import {computed, reactive, ref, watch} from "vue";
@@ -21,6 +21,9 @@ import TopicEditor from "@/components/TopicEditor.vue";
 import {useStore} from "@/store";
 import axios from "axios";
 import ColorDot from "@/components/ColorDot.vue";
+import router from "@/router";
+import TopicTag from "@/components/TopicTag.vue";
+import TopicCollectList from "@/components/TopicCollectList.vue";
 
 const store = useStore()
 
@@ -38,6 +41,7 @@ const topics =reactive({
   end: false,
   top: []
 })
+const collects = ref(false)
 
 watch(() => topics.type, () => {
   resetList()
@@ -46,12 +50,6 @@ watch(() => topics.type, () => {
 const today = computed(() => {
   const date = new Date()
   return `${date.getFullYear()} 年 ${date.getMonth()+1} 月 ${date.getDate()} 日`
-})
-get('api/forum/types', data => {
-  const array = []
-  array.push({name: '全部', id: 0, color: 'linear-gradient(45deg, white, red, orange, gold, green, blue)'})
-  data.forEach(d => array.push(d))
-  store.forum.types = array
 })
 
 get('api/forum/top-topic', data => topics.top = data)
@@ -115,7 +113,8 @@ navigator.geolocation.getCurrentPosition(position => {
         </div>
       </light-card>
       <light-card style="margin-top: 10px">
-        <div v-for="item in topics.top" class="top-topic">
+        <div v-for="item in topics.top" class="top-topic"
+             @click="router.push(`/index/topic-detail/${item.id}`)">
           <el-tag type="info" size="small">置顶</el-tag>
           <div>{{item.title}}</div>
           <div>{{new Date(item.time).toLocaleDateString()}}</div>
@@ -133,7 +132,8 @@ navigator.geolocation.getCurrentPosition(position => {
         <div v-if="topics.list.length">
           <div style="margin-top: 10px;display: flex;flex-direction: column;gap: 10px"
                v-infinite-scroll="updateList">
-            <light-card v-for="item in topics.list" class="topic-card">
+            <light-card v-for="item in topics.list" class="topic-card"
+                        @click="router.push('/index/topic-detail/'+item.id)">
               <div style="display: flex">
                 <div>
                   <el-avatar :size="30" :src="`${axios.defaults.baseURL}/images${item.avatar}`"/>
@@ -149,19 +149,20 @@ navigator.geolocation.getCurrentPosition(position => {
                 </div>
               </div>
               <div style="margin-top: 5px">
-                <div class="topic-type"
-                     :style="{
-                    color: store.findTypeById(item.type)?.color + 'EE',
-                    'border-color': store.findTypeById(item.type)?.color + '77',
-                    'background': store.findTypeById(item.type)?.color + '33'
-                 }">
-                  {{store.findTypeById(item.type)?.name}}
-                </div>
+                <topic-tag :type="item.type"/>
                 <span style="font-weight: bold;margin-left: 7px">{{item.title}}</span>
               </div>
               <div class="topic-content">{{item.text}}</div>
               <div style="display: grid;grid-template-columns: repeat(3, 1fr);grid-gap: 10px">
                 <el-image class="topic-image" v-for="img in item.images" :src="img" fit="cover"></el-image>
+              </div>
+              <div style="display: flex;gap: 20px;font-size: 13px;margin-top: 10px;opacity: 0.8">
+                <div>
+                  <el-icon style="vertical-align: middle"><CircleCheck/></el-icon> {{ item.like }}点赞
+                </div>
+                <div>
+                  <el-icon style="vertical-align: middle"><Star/></el-icon> {{ item.collect }}收藏
+                </div>
               </div>
             </light-card>
           </div>
@@ -171,6 +172,12 @@ navigator.geolocation.getCurrentPosition(position => {
     <div style="width: 280px">
       <div style="position: sticky; top: 20px">
         <light-card>
+          <div class="collect-list-button" @click="collects = true">
+            <span><el-icon><FolderOpened/></el-icon>查看我的收藏</span>
+            <el-icon style="transform: translateY(3px)"><ArrowRightBold/></el-icon>
+          </div>
+        </light-card>
+        <light-card style="margin-top: 10px">
           <div style="font-weight: bold">
             <el-icon><CollectionTag/></el-icon>
             论坛公告
@@ -220,10 +227,22 @@ navigator.geolocation.getCurrentPosition(position => {
 
     </div>
     <topic-editor :show="editor" @success="onTopicCreate" @close="editor = false"/>
+    <topic-collect-list :show="collects" @close="collects = false"/>
   </div>
 </template>
 
 <style lang="less" scoped>
+.collect-list-button {
+  font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+  transition: .3s;
+
+  &:hover {
+    cursor: pointer;
+    opacity: 0.6;
+  }
+}
 .top-topic {
   display: flex;
 
@@ -285,14 +304,7 @@ navigator.geolocation.getCurrentPosition(position => {
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .topic-type {
-    display: inline-block;
-    border: solid 0.5px grey;
-    border-radius: 3px;
-    font-size: 12px;
-    padding: 0 5px;
-    height: 18px;
-  }
+
   .topic-image {
     width: 100%;
     height: 100%;
