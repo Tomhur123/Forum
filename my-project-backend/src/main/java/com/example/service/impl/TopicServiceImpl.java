@@ -15,6 +15,7 @@ import com.example.entity.vo.response.TopicPreviewVO;
 import com.example.entity.vo.response.TopicTopVO;
 import com.example.mapper.*;
 import com.example.service.AccountService;
+import com.example.service.NotificationService;
 import com.example.service.TopicService;
 import com.example.utils.CacheUtils;
 import com.example.utils.Const;
@@ -58,6 +59,9 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
 
     @Resource
     TopicCommentMapper topicCommentMapper;
+
+    @Resource
+    NotificationService notificationService;
 
     private Set<Integer> types = null;
 
@@ -197,6 +201,29 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         BeanUtils.copyProperties(vo, comment);
         comment.setTime(new Date());
         topicCommentMapper.insert(comment);
+        Topic topic = baseMapper.selectById(vo.getTid());
+        Account account = accountMapper.selectById(uid);
+        if (vo.getQuote() > 0) {
+            TopicComment com = topicCommentMapper.selectById(vo.getQuote());
+            if (!Objects.equals(account.getId(), com.getUid())) {
+                System.out.println(1);
+                notificationService.addNotification(
+                        com.getUid(),
+                        "您有新的帖子评论回复",
+                        account.getUsername()+" 回复了你的评论，快去看看吧！",
+                        "success", "/index/topic-detail/"+com.getTid()
+                );
+            }
+        } else if (!Objects.equals(account.getId(), topic.getUid())) {
+            System.out.println(2);
+            notificationService.addNotification(
+                    topic.getUid(),
+                    "您有新的帖子回复",
+                    account.getUsername()+" 回复了你发表的主题："+topic.getTitle()+"，快去看看吧！",
+                    "success", "/index/topic-detail/"+topic.getId()
+            );
+        }
+        System.out.println(3);
         return null;
     }
 
@@ -208,18 +235,28 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
             CommentVO vo = new CommentVO();
             BeanUtils.copyProperties(dto, vo);
             if (dto.getQuote() > 0) {
-                JSONObject object = JSONObject.parseObject(
-                        topicCommentMapper.selectOne(Wrappers.<TopicComment>query().eq("id", dto.getId()).orderByAsc("time")).getContent()
-                );
-                StringBuilder builder = new StringBuilder();
-                this.shortContent(object.getJSONArray("ops"), builder, ignore -> {});
-                vo.setQuote(builder.toString());
+                TopicComment comment = topicCommentMapper.selectOne(Wrappers.<TopicComment>query()
+                        .eq("id", dto.getQuote()).orderByAsc("time"));
+                if (comment != null) {
+                    JSONObject object = JSONObject.parseObject(comment.getContent());
+                    StringBuilder builder = new StringBuilder();
+                    this.shortContent(object.getJSONArray("ops"), builder, ignore -> {
+                    });
+                    vo.setQuote(builder.toString());
+                } else {
+                    vo.setQuote("此评论已被删除");
+                }
             }
             CommentVO.User user = new CommentVO.User();
             this.fillUserDetailsByPrivacy(user, dto.getUid());
             vo.setUser(user);
             return vo;
         }).toList();
+    }
+
+    @Override
+    public void deleteComment(int id, int uid) {
+        topicCommentMapper.delete(Wrappers.<TopicComment>query().eq("id", id).eq("uid", uid));
     }
 
     private final Map<String, Boolean> state = new HashMap<>();
