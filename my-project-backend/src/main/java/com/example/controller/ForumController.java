@@ -3,6 +3,7 @@ package com.example.controller;
 import com.alibaba.fastjson2.JSONObject;
 import com.example.entity.RestBean;
 import com.example.entity.dto.Interact;
+import com.example.entity.vo.request.AddCommentVO;
 import com.example.entity.vo.request.TopicCreateVO;
 import com.example.entity.vo.request.TopicUpdateVO;
 import com.example.entity.vo.response.*;
@@ -89,5 +90,17 @@ public class ForumController {
     public RestBean<Void> updateTopic(@Valid @RequestBody TopicUpdateVO vo,
                                       @RequestAttribute(Const.ATTR_USER_ID) int uid) {
         return utils.messageHandle(() -> topicService.updateTopic(uid, vo));
+    }
+
+    @PostMapping("/add-comment")
+    public RestBean<Void> addComment(@Valid @RequestBody AddCommentVO vo,
+                                     @RequestAttribute(Const.ATTR_USER_ID) int uid) {
+        return utils.messageHandle(() -> topicService.createComment(uid, vo));
+    }
+
+    @GetMapping("/comments")
+    public RestBean<List<CommentVO>> comments(@RequestParam @Min(0) int tid,
+                                              @RequestParam @Min(0) int page){
+        return RestBean.success(topicService.comments(tid, page+1));
     }
 }
