@@ -1,5 +1,8 @@
 <script setup>
 import { useDark, useToggle } from '@vueuse/core'
+import {onMounted, provide, ref} from "vue";
+import {unauthorized} from "@/net";
+import {getUserInfo} from "@/net/api/user";
 
 useDark({
   selector: 'html',
@@ -12,6 +15,14 @@ useDark({
   onChanged(dark) { useToggle(dark) }
 })
 
+const loading = ref(false)
+provide('userLoading', loading)
+
+onMounted(() =>{
+ if(!unauthorized()) {
+   getUserInfo(loading)
+ }
+})
 </script>
 
 <template>
