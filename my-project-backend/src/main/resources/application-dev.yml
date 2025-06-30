@@ -16,7 +16,7 @@ spring:
           socketFactory:
             class: javax.net.ssl.SSLSocketFactory
   rabbitmq:
-    host: 192.168.0.111
+    host: 192.168.0.107
     port: 5672
     username: admin
     password: admin
@@ -48,7 +48,7 @@ spring:
       credentials: false
       methods: '*'
   minio:
-    endpoint: 'http://192.168.0.111:9000/'
+    endpoint: 'http://192.168.0.107:9000/'
     username: 'minio'
     password: 'password'
   weather:

@@ -3,10 +3,11 @@
 import Card from "@/components/Card.vue";
 import {Message, Notebook, Refresh, Select, User} from "@element-plus/icons-vue";
 import {useStore} from "@/store";
-import {computed, reactive, ref} from "vue";
-import {post, get, accessHeader} from "@/net";
+import {computed, onMounted, reactive, ref} from "vue";
+import {accessHeader} from "@/net";
 import {ElMessage} from "element-plus";
 import axios from "axios";
+import {apiUserDetails, apiUserDetailsSave, apiUserEmailModify, apiUserValidateEmail} from "@/net/api/user";
 
 const store = useStore()
 
@@ -59,7 +60,7 @@ function saveDetails() {
   baseFormRef.value.validate(isValid => {
     if (isValid) {
       loading.base = true
-      post('/api/user/save-details', baseForm, () => {
+      apiUserDetailsSave(baseForm,() => {
         ElMessage.success("用户信息保存成功")
         store.user.username = baseForm.username
         desc.value = baseForm.description
@@ -72,16 +73,6 @@ function saveDetails() {
   })
 }
 
-get('/api/user/details', data => {
-  baseForm.username = store.user.username
-  baseForm.gender = data.gender
-  baseForm.phone = data.phone
-  baseForm.qq = data.qq
-  baseForm.wx = data.wx
-  baseForm.description = desc.value = data.description
-  emailForm.email = store.user.email
-  loading.form = false
-})
 const coldTime = ref(0)
 const isEmailValid = ref(true)
 const onValidate = (prop, isValid)=>{
@@ -91,19 +82,7 @@ const onValidate = (prop, isValid)=>{
 function sendEmailCode(){
   emailFormRef.value.validate(isValid => {
     if(isValid) {
-      coldTime.value = 60
-      get(`api/auth/ask-code?email=${emailForm.email}&type=modify`, () =>{
-        ElMessage.success(`验证码已经成功发送到邮箱：${emailForm.email}, 请注意查收`)
-        const handle = setInterval(() =>{
-          coldTime.value--
-          if(coldTime.value === 0) {
-            clearInterval(handle)
-          }
-        },1000)
-      }, (message) => {
-        ElMessage.warning(message)
-        coldTime.value = 0
-      })
+      apiUserValidateEmail(emailForm.email,coldTime,'modify')
     }
   })
 
@@ -112,13 +91,12 @@ function sendEmailCode(){
 function modifyEmail() {
   emailFormRef.value.validate(isValid => {
     if(isValid){
-      post('api/user/modify-email', emailForm, () => {
+      apiUserEmailModify(emailForm,() => {
         ElMessage.success('邮件修改成功')
         store.user.email = emailForm.email
         emailForm.code = ''
       })
     }
-
   })
 }
 function beforeAvatarUpload(rawFile) {
@@ -136,6 +114,19 @@ function uploadSuccess(response) {
   ElMessage.success('头像上传成功')
   store.user.avatar = response.data
 }
+
+onMounted(() => {
+  apiUserDetails(data => {
+    baseForm.username = store.user.username
+    baseForm.gender = data.gender
+    baseForm.phone = data.phone
+    baseForm.qq = data.qq
+    baseForm.wx = data.wx
+    baseForm.description = desc.value = data.description
+    emailForm.email = store.user.email
+    loading.form = false
+  })
+})
 </script>
 
 <template>

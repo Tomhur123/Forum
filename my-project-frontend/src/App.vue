@@ -2,7 +2,7 @@
 import { useDark, useToggle } from '@vueuse/core'
 import {onMounted, provide, ref} from "vue";
 import {unauthorized} from "@/net";
-import {getUserInfo} from "@/net/api/user";
+import {apiUserInfo} from "@/net/api/user";
 
 useDark({
   selector: 'html',
@@ -20,7 +20,7 @@ provide('userLoading', loading)
 
 onMounted(() =>{
  if(!unauthorized()) {
-   getUserInfo(loading)
+   apiUserInfo(loading)
  }
 })
 </script>
