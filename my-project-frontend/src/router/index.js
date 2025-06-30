@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { unauthorized } from "@/net";
+import {isRoleAdmin, unauthorized} from "@/net";
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -67,8 +67,10 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-    const isUnauthorized = unauthorized()
+    const isUnauthorized = unauthorized() , admin = isRoleAdmin()
     if(to.name.startsWith('welcome') && !isUnauthorized) {
+        next('/index')
+    } else if(to.fullPath.startsWith('/admin') && !admin){
         next('/index')
     } else if(to.fullPath.startsWith('/index') && isUnauthorized) {
         next('/')
