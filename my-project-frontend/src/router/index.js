@@ -60,7 +60,19 @@ const router = createRouter({
             name: 'admin',
             component: () => import('@/views/AdminView.vue'),
             children: [
-
+                {
+                    path: '',
+                    name: 'admin-welcome',
+                    component: () => import('@/views/admin/AdminWelcome.vue')
+                },{
+                    path: 'user',
+                    name: 'user',
+                    component: () => import ('@/views/admin/AdminUser.vue')
+                },{
+                    path: 'forum',
+                    name: 'forum',
+                    component: () => import('@/views/admin/AdminForum.vue')
+                }
             ]
         }
     ]

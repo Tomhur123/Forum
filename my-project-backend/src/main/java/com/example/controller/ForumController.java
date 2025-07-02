@@ -2,11 +2,13 @@ package com.example.controller;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.example.entity.RestBean;
+import com.example.entity.dto.Account;
 import com.example.entity.dto.Interact;
 import com.example.entity.vo.request.AddCommentVO;
 import com.example.entity.vo.request.TopicCreateVO;
 import com.example.entity.vo.request.TopicUpdateVO;
 import com.example.entity.vo.response.*;
+import com.example.service.AccountService;
 import com.example.service.TopicService;
 import com.example.service.WeatherService;
 import com.example.utils.Const;
@@ -31,6 +33,9 @@ public class ForumController {
     TopicService topicService;
 
     @Resource
+    AccountService accountService;
+
+    @Resource
     ControllerUtils utils;
 
     @GetMapping("/weather")
@@ -52,6 +57,10 @@ public class ForumController {
     @PostMapping("/create-topic")
     public  RestBean<Void> createTopic(@Valid @RequestBody TopicCreateVO vo,
                                        @RequestAttribute(Const.ATTR_USER_ID) int id){
+        Account account = accountService.findAccountById(id);
+        if(account.isMute()) {
+            return RestBean.forbidden("此账号已被禁止发表帖子！");
+        }
         return utils.messageHandle(() -> topicService.createTopic(id, vo));
     }
 
@@ -95,6 +104,10 @@ public class ForumController {
     @PostMapping("/add-comment")
     public RestBean<Void> addComment(@Valid @RequestBody AddCommentVO vo,
                                      @RequestAttribute(Const.ATTR_USER_ID) int uid) {
+        Account account = accountService.findAccountById(uid);
+        if(account.isMute()) {
+            return RestBean.forbidden("此账号已被禁止发表评论！");
+        }
         return utils.messageHandle(() -> topicService.createComment(uid, vo));
     }
 

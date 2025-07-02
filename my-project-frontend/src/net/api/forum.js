@@ -39,11 +39,11 @@ export const apiForumTopicList = (page, type, success) =>
 export const apiForumWeather = (longitude,latitude,success) =>
     get(`api/forum/weather?longitude=${longitude}&latitude=${latitude}`, success)
 
-export const apiForumTopicCreate = (success) =>
+export const apiForumTopicCreate = (data,success) =>
     post('/api/forum/create-topic', data, success)
 
 export const apiForumCommentSubmit = (data, success) =>
-    post('/api/forum/add-comment', data, success)
+    post('/api/forum/add-comment',data, success)
 
 export const apiForumCollects = (success) =>
     get('api/forum/collects', success)

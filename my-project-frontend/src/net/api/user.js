@@ -1,7 +1,6 @@
 import {get, post} from "@/net";
 import {useStore} from "@/store";
 import {ElMessage} from "element-plus";
-import router from "@/router";
 
 export const apiUserInfo = (loadingRef) => {
     loadingRef.value = true
@@ -76,3 +75,12 @@ export const apiNotificationDelete = (id,success) =>
 
 export const apiNotificationDeleteAll = (success) =>
     get('api/notification/delete-all', success)
+
+export const apiAdminUserList = (page, size,success) =>
+    get(`api/admin/list?page=${page}&size=${size}`, success)
+
+export const apiAdminUserDetails = (id, success) =>
+    get(`api/admin/details?id=${id}`,success)
+
+export const apiAdminUserDetailsSave = (data,success) =>
+    post('api/admin/save', data, success)
