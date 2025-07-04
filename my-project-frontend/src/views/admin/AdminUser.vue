@@ -1,7 +1,7 @@
 <script setup>
 
 import {apiAdminUserDetails, apiAdminUserDetailsSave, apiAdminUserList} from "@/net/api/user";
-import {reactive, watchEffect} from "vue";
+import {reactive, ref, watchEffect} from "vue";
 import {useStore} from "@/store";
 import {EditPen} from "@element-plus/icons-vue";
 import {ElMessage} from "element-plus";
@@ -18,10 +18,12 @@ const store = useStore()
 const editor = reactive({
   id: 0,
   display: false,
-  temp: {},
+  temp: {
+    details: {},
+    privacy: {}
+  },
   loading: false
 })
-
 
 const handleEdit = (user) =>  {
   editor.id = user.id
@@ -29,18 +31,18 @@ const handleEdit = (user) =>  {
   editor.loading = true
   apiAdminUserDetails(editor.id, data => {
     editor.temp = {...data, ...user}
+    console.log(editor.temp)
     editor.loading = false
   })
 }
 
 function saveUserDetails() {
   apiAdminUserDetailsSave(editor.temp, () => {
-    var user = userTable.data.find(user => user.id === editor.temp.id);
+    const user = userTable.data.find(user => user.id === editor.temp.id);
     Object.assign(user, editor.temp)
     ElMessage.success('用户信息保存成功！')
   })
 }
-
 
 watchEffect(() => apiAdminUserList(userTable.page,userTable.size, data => {
   userTable.total = data.total
@@ -112,25 +114,50 @@ watchEffect(() => apiAdminUserList(userTable.page,userTable.size, data => {
           </div>
         </div>
       </template>
-      <el-form label-position="top">
-        <el-form-item label="用户名">
-          <el-input v-model="editor.temp.username"/>
-        </el-form-item>
-        <el-form-item label="电子邮件">
-          <el-input v-model="editor.temp.email"/>
-        </el-form-item>
-        <div class="admin-switch">
-          <el-switch class="admin-switch-inner" v-model="editor.temp.mute"/>
-          {{editor.temp.mute===true?'禁言中':'禁言'}}
-          <el-divider direction="vertical" style="height: 30px"/>
-          <el-switch class="admin-switch-inner" v-model="editor.temp.banned"/>
-          {{editor.temp.banned === true ? '账号封禁中' : '封禁账号'}}
+      <el-scrollbar height="100%">
+        <div style="text-align: center">
+          <el-avatar size="default" :src="store.avatarUserUrl(editor.temp.avatar)"/>
         </div>
-        <div style="margin-top:10px;text-align: center;font-size: 12px;color: grey">
-          注册时间: {{new Date(editor.temp.registerTime).toLocaleString()}}
-        </div>
-      </el-form>
-      <el-divider style="margin-top: 10px;color: grey"/>
+        <el-form label-position="top">
+          <el-form-item label="用户名">
+            <el-input v-model="editor.temp.username"/>
+          </el-form-item>
+          <el-radio-group style="display: flex;gap: 80px" v-model="editor.temp.details.gender">
+            <el-radio style="margin-right: 10px" :label=0>男</el-radio>
+            <el-radio style="margin-right: 10px" :label=1>女</el-radio>
+          </el-radio-group>
+          <el-form-item label="电子邮件">
+            <el-input v-model="editor.temp.email"/>
+          </el-form-item>
+          <el-radio-group style="display: flex;gap: 80px" v-model="editor.temp.role">
+            <el-radio style="margin-right: 10px" label="user">用户</el-radio>
+            <el-radio style="margin-right: 10px" label="admin">管理员</el-radio>
+          </el-radio-group>
+          <el-form-item label="QQ">
+            <el-input v-model="editor.temp.details.qq"/>
+          </el-form-item>
+          <el-form-item label="微信">
+            <el-input v-model="editor.temp.details.wx"/>
+          </el-form-item>
+          <el-form-item label="手机号">
+            <el-input v-model="editor.temp.details.phone"/>
+          </el-form-item>
+          <el-form-item label="个人简介">
+            <el-input autosize type="textarea" v-model="editor.temp.details.description"/>
+          </el-form-item>
+          <div class="admin-switch">
+            <el-switch class="admin-switch-inner" v-model="editor.temp.mute"/>
+            {{editor.temp.mute===true?'禁言中':'禁言'}}
+            <el-divider direction="vertical" style="height: 30px"/>
+            <el-switch class="admin-switch-inner" v-model="editor.temp.banned"/>
+            {{editor.temp.banned === true ? '账号封禁中' : '封禁账号'}}
+          </div>
+          <div style="margin-top:10px;text-align: center;font-size: 12px;color: grey">
+            注册时间: {{new Date(editor.temp.registerTime).toLocaleString()}}
+          </div>
+        </el-form>
+        <el-divider style="margin-top: 10px;color: grey"/>
+      </el-scrollbar>
       <template #footer>
         <div style="text-align: center">
           <el-button type="primary" @click="saveUserDetails">保存</el-button>
